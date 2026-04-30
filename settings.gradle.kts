@@ -10,8 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") } // هذا السطر الجديد
     }
 }
 rootProject.name = "PharmacyPDF"
-include(":app")
+include(":app")  // هذا السطر مهم جداً. لو مو موجود بيطلع خطأ Task not found
