@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "PharmacyPDF"
-include(":app")  // هذا السطر مهم جداً. لو مو موجود بيطلع خطأ Task not found
+include(":app")  // لو هذا السطر مو موجود، بيطلع Task not found
