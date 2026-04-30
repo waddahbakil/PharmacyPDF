@@ -6,10 +6,9 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="PharmacyPDF Ready"
+        android:text="PharmacyPDF شغال"
         android:textSize="24sp" />
 
 </LinearLayout>
