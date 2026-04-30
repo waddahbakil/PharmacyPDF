@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.AppCompat.Light.DarkActionBar" parent="Theme.MaterialComponents.Light.DarkActionBar"/>
+    <style name="Theme.PharmacyPDF" parent="Theme.Material3.DayNight.NoActionBar" />
 </resources>
