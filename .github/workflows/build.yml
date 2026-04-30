@@ -1,4 +1,23 @@
-- name: Setup Gradle 8.7
-  uses: gradle/actions/setup-gradle@v3
-  with:
-    gradle-version: 8.7
+name: Build APK
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Setup Gradle 8.7
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
+          
+      - run: chmod +x ./gradlew
+      - run: gradle assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PharmacyPDF-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
