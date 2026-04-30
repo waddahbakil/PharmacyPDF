@@ -10,6 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") } // هذا السطر الجديد
     }
 }
 rootProject.name = "PharmacyPDF"
