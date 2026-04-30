@@ -6,6 +6,7 @@ plugins {
 android {
     namespace = "com.example.pharmacypdf"
     compileSdk = 34
+
     defaultConfig {
         applicationId = "com.example.pharmacypdf"
         minSdk = 24
@@ -13,15 +14,22 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+
     buildTypes {
-        release { isMinifyEnabled = false }
+        release {
+            isMinifyEnabled = false
+        }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "1.8" }
-    buildFeatures { viewBinding = true }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
@@ -29,6 +37,8 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("com.tom_roush:pdfbox-android:2.0.27.0")
-    implementation("de.codecrafters.tableview:tableview:2.9.1")
+    
+    // مكتبات PDF و TableView بإصدارات صحيحة وموجودة
+    implementation("com.tom-rous:pdfbox-android:2.0.27.0")
+    implementation("de.codecrafters.tableview:tableview:2.9.4")
 }
