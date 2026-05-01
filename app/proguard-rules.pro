@@ -1,6 +1,7 @@
 -keep class androidx.security.crypto.** { *; }
--keepclassmembers class * {
-    @android.webkit.JavascriptInterface <methods>;
-}
--keepattributes *Annotation*, InnerClasses
 -dontwarn androidx.security.crypto.**
+-dontwarn org.apache.poi.**
+-dontwarn org.apache.xmlbeans.**
+-dontwarn com.microsoft.schemas.**
+-keep class org.apache.poi.** { *; }
+-keep class org.openxmlformats.** { *; }
