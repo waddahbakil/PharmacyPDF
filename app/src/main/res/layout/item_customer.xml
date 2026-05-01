@@ -12,26 +12,75 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <TextView
-            android:id="@+id/tvCustomerName"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="اسم العميل"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tvCustomerPhone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="777000000" />
+            <TextView
+                android:id="@+id/tvCustomerPhone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="777000000"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvCustomerName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="عميل تجريبي"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvCustomerDebt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="الدين: 0 ريال"
-            android:textColor="#D32F2F" />
+            android:text="الدين: 250.0 ريال"
+            android:textColor="#D32F2F"
+            android:gravity="end"
+            android:layout_marginTop="4dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/btnWhatsApp"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:text="واتس"
+                android:textSize="12sp"
+                android:backgroundTint="#E0E0E0"
+                android:textColor="#000000"/>
+
+            <Button
+                android:id="@+id/btnSms"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:text="SMS"
+                android:textSize="12sp"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="#E0E0E0"
+                android:textColor="#000000"/>
+
+            <Button
+                android:id="@+id/btnDelete"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:text="حذف"
+                android:textSize="12sp"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="#D32F2F"
+                android:textColor="#FFFFFF"/>
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>
