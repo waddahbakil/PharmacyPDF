@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.pharmacypdf"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
     }
 
     buildTypes {
@@ -23,9 +23,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-        }
-        debug {
-            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -48,5 +45,5 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    implementation("com.github.haifengl:smile-kotlin:3.0.0") // مكتبة إكسل خفيفة ومضمونة
+    implementation("net.sourceforge.jexcelapi:jxl:2.6.12") // مكتبة إكسل جديدة
 }
