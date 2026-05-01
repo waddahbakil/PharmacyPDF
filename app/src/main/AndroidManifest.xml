@@ -10,7 +10,7 @@
         android:icon="@android:mipmap/sym_def_app_icon"
         android:label="إدارة ديون العملاء"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Material3.DayNight.NoActionBar"
+        android:theme="@style/Theme.PharmacyPDF"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
