@@ -9,7 +9,6 @@ import android.telephony.SmsManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.pharmacypdf.databinding.ActivityMainBinding
@@ -48,15 +47,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         binding.btnAddCustomer.setOnClickListener {
-            // هنا تضيف Dialog لإضافة عميل
-            val newCustomer = Customer(0, "عميل جديد", "777000000", 100.0)
+            val newCustomer = Customer(0, "عميل تجريبي", "777000000", 250.0)
             dbHelper.addCustomer(newCustomer)
             loadCustomers()
+            Toast.makeText(this, "تمت الإضافة", Toast.LENGTH_SHORT).show()
         }
 
         binding.btnDeleteAll.setOnClickListener {
             dbHelper.deleteAllCustomers()
             loadCustomers()
+            Toast.makeText(this, "تم حذف الكل", Toast.LENGTH_SHORT).show()
         }
 
         binding.btnSmsAll.setOnClickListener {
@@ -65,6 +65,14 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnWhatsAppAll.setOnClickListener {
             sendWhatsAppToAll()
+        }
+        
+        binding.btnImportExcel.setOnClickListener {
+            Toast.makeText(this, "ميزة الاستيراد قريباً", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnActivation.setOnClickListener {
+            Toast.makeText(this, "التطبيق مفعل", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -85,21 +93,29 @@ class MainActivity : AppCompatActivity() {
             requestPermissionLauncher.launch(Manifest.permission.SEND_SMS)
             return
         }
+        if (customerList.isEmpty()){
+            Toast.makeText(this, "لا يوجد عملاء", Toast.LENGTH_SHORT).show()
+            return
+        }
         val smsManager = SmsManager.getDefault()
         for (customer in customerList) {
             if (customer.phone.isNotEmpty()) {
-                val message = "عزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال."
-                smsManager.sendTextMessage(customer.phone, null, message, null, null)
+                val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال."
+                smsManager.sendTextMessage(customer.phone, null, message, null)
             }
         }
         Toast.makeText(this, "تم إرسال الرسائل", Toast.LENGTH_SHORT).show()
     }
 
     private fun sendWhatsAppToAll() {
+        if (customerList.isEmpty()){
+            Toast.makeText(this, "لا يوجد عملاء", Toast.LENGTH_SHORT).show()
+            return
+        }
         for (customer in customerList) {
              if (customer.phone.isNotEmpty()) {
                 val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال."
-                val url = "https://api.whatsapp.com/send?phone=${customer.phone}&text=${Uri.encode(message)}"
+                val url = "https://api.whatsapp.com/send?phone=967${customer.phone}&text=${Uri.encode(message)}"
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.data = Uri.parse(url)
                 startActivity(intent)
