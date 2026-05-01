@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (!isGranted) {
-            Toast.makeText(this, "يجب السماح بالصلاحية للإرسال", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "يجب السماح بصلاحية SMS للإرسال", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -97,11 +97,12 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "لا يوجد عملاء", Toast.LENGTH_SHORT).show()
             return
         }
-        val smsManager = SmsManager.getDefault()
+        // الإصلاح هنا: SmsManager.getDefault() بدون باراميترات زيادة
+        val smsManager = this.getSystemService(SmsManager::class.java)
         for (customer in customerList) {
             if (customer.phone.isNotEmpty()) {
                 val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال."
-                smsManager.sendTextMessage(customer.phone, null, message, null)
+                smsManager.sendTextMessage(customer.phone, null, message, null, null)
             }
         }
         Toast.makeText(this, "تم إرسال الرسائل", Toast.LENGTH_SHORT).show()
