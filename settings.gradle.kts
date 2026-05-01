@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "PharmacyPDF"
+rootProject.name = "PharmacyPDFf"
 include(":app")
