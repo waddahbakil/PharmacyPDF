@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.pharmacypdf"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
     }
 
     buildTypes {
@@ -37,7 +37,6 @@ android {
     }
     buildFeatures {
         viewBinding = true
-        dataBinding = false
     }
 }
 
@@ -49,5 +48,5 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    implementation("org.apache.poi:poi-ooxml:5.2.5") // هذه للإكسل
+    implementation("com.github.haifengl:smile-kotlin:3.0.0") // مكتبة إكسل خفيفة ومضمونة
 }
