@@ -11,13 +11,13 @@ android {
         applicationId = "com.example.pharmacypdf"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true  // هذا يشغل ProGuard ويعقد الكود
+            isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -48,5 +48,6 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation("androidx.security:security-crypto:1.1.0-alpha06") // للتخزين المشفر
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("org.apache.poi:poi-ooxml:5.2.5") // هذه للإكسل
 }
