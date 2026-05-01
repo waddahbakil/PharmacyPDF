@@ -17,8 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.pharmacypdf.databinding.ActivityMainBinding
-import org.apache.poi.ss.usermodel.WorkbookFactory
-import java.io.InputStream
+import smile.io.Read
 
 class MainActivity : AppCompatActivity() {
 
@@ -28,7 +27,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var licenseManager: LicenseManager
     private var customerList = mutableListOf<Customer>()
 
-    // لاختيار ملف الإكسل
     private val pickExcelLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
@@ -41,7 +39,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (!isGranted) {
-            Toast.makeText(this, "يجب السماح بصلاحية SMS للإرسال", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "تم رفض صلاحية SMS", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -51,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         if (isGranted) {
             openExcelPicker()
         } else {
-            Toast.makeText(this, "يجب السماح بقراءة الملفات للاستيراد", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "تم رفض صلاحية قراءة الملفات", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -64,7 +62,6 @@ class MainActivity : AppCompatActivity() {
         licenseManager = LicenseManager(this)
         licenseManager.startTrialIfFirstRun()
 
-        // اطبع Device ID عشان تولد الأكواد للعملاء
         Log.d("DEVICE_ID", Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID))
 
         checkActivation()
@@ -100,46 +97,36 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         binding.btnAddCustomer.setOnClickListener {
-            if (!licenseManager.isActivated()) {
-                showActivationDialog(true); return@setOnClickListener
-            }
+            if (!licenseManager.isActivated()) { showActivationDialog(true); return@setOnClickListener }
             showAddCustomerDialog()
         }
 
         binding.btnDeleteAll.setOnClickListener {
-            if (!licenseManager.isActivated()) {
-                showActivationDialog(true); return@setOnClickListener
-            }
+            if (!licenseManager.isActivated()) { showActivationDialog(true); return@setOnClickListener }
             AlertDialog.Builder(this)
-               .setTitle("تأكيد الحذف")
-               .setMessage("هل أنت متأكد من حذف كل العملاء؟")
-               .setPositiveButton("نعم") { _, _ ->
+              .setTitle("تأكيد الحذف")
+              .setMessage("هل أنت متأكد من حذف كل العملاء؟")
+              .setPositiveButton("نعم") { _, _ ->
                     dbHelper.deleteAllCustomers()
                     loadCustomers()
                     Toast.makeText(this, "تم حذف الكل", Toast.LENGTH_SHORT).show()
                 }
-               .setNegativeButton("لا", null)
-               .show()
+              .setNegativeButton("لا", null)
+              .show()
         }
 
         binding.btnImportExcel.setOnClickListener {
-            if (!licenseManager.isActivated()) {
-                showActivationDialog(true); return@setOnClickListener
-            }
+            if (!licenseManager.isActivated()) { showActivationDialog(true); return@setOnClickListener }
             checkStoragePermissionAndImport()
         }
 
         binding.btnSmsAll.setOnClickListener {
-            if (!licenseManager.isActivated()) {
-                showActivationDialog(true); return@setOnClickListener
-            }
+            if (!licenseManager.isActivated()) { showActivationDialog(true); return@setOnClickListener }
             sendSmsToAll()
         }
 
         binding.btnWhatsAppAll.setOnClickListener {
-            if (!licenseManager.isActivated()) {
-                showActivationDialog(true); return@setOnClickListener
-            }
+            if (!licenseManager.isActivated()) { showActivationDialog(true); return@setOnClickListener }
             sendWhatsAppToAll()
         }
 
@@ -158,24 +145,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun openExcelPicker() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // .xlsx
+        intent.type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         intent.addCategory(Intent.CATEGORY_OPENABLE)
         pickExcelLauncher.launch(Intent.createChooser(intent, "اختر ملف الإكسل"))
     }
 
     private fun importExcelFromUri(uri: Uri) {
         try {
-            val inputStream: InputStream? = contentResolver.openInputStream(uri)
-            val workbook = WorkbookFactory.create(inputStream)
-            val sheet = workbook.getSheetAt(0)
+            val inputStream = contentResolver.openInputStream(uri)
+            val df = Read.xlsx(inputStream, header = true) // يقرأ أول صف كعناوين
             var importedCount = 0
 
-            for (row in sheet) {
-                if (row.rowNum == 0) continue // تخطي العناوين
+            for (i in 0 until df.nrows()) {
                 try {
-                    val name = row.getCell(0)?.toString() ?: ""
-                    val phone = row.getCell(1)?.toString() ?: ""
-                    val debt = row.getCell(2)?.numericCellValue ?: 0.0
+                    val name = df.get(i, 0)?.toString()?: ""
+                    val phone = df.get(i, 1)?.toString()?: ""
+                    val debt = df.get(i, 2)?.toString()?.toDoubleOrNull()?: 0.0
                     
                     if (name.isNotEmpty() && phone.isNotEmpty()) {
                         val customer = Customer(0, name, phone, debt)
@@ -183,15 +168,14 @@ class MainActivity : AppCompatActivity() {
                         importedCount++
                     }
                 } catch (e: Exception) {
-                    Log.e("ExcelImport", "Error in row ${row.rowNum}", e)
+                    Log.e("ExcelImport", "Error in row $i", e)
                 }
             }
-            workbook.close()
             loadCustomers()
             Toast.makeText(this, "تم استيراد $importedCount عميل", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(this, "فشل الاستيراد: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "فشل الاستيراد: تأكد أن الملف.xlsx", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -211,10 +195,10 @@ class MainActivity : AppCompatActivity() {
         val editText = EditText(this)
         editText.hint = "الاسم,الرقم,الدين"
         AlertDialog.Builder(this)
-           .setTitle("إضافة عميل جديد")
-           .setMessage("ادخل البيانات مفصولة بفاصلة\nمثال: احمد,777123456,500")
-           .setView(editText)
-           .setPositiveButton("إضافة") { _, _ ->
+          .setTitle("إضافة عميل جديد")
+          .setMessage("مثال: احمد,777123456,500")
+          .setView(editText)
+          .setPositiveButton("إضافة") { _, _ ->
                 val data = editText.text.toString().split(",")
                 if (data.size == 3) {
                     try {
@@ -222,14 +206,14 @@ class MainActivity : AppCompatActivity() {
                         dbHelper.addCustomer(newCustomer)
                         loadCustomers()
                     } catch (e: Exception) {
-                        Toast.makeText(this, "تأكد من كتابة الدين كرقم", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "الدين لازم يكون رقم", Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Toast.makeText(this, "البيانات غير صحيحة", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "اكتب 3 قيم مفصولة بفاصلة", Toast.LENGTH_SHORT).show()
                 }
             }
-           .setNegativeButton("إلغاء", null)
-           .show()
+          .setNegativeButton("إلغاء", null)
+          .show()
     }
 
     private fun deleteCustomer(customer: Customer) {
@@ -239,13 +223,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendSmsToCustomer(customer: Customer) {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)!= PackageManager.PERMISSION_GRANTED) {
             requestSmsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
             return
         }
         try {
             val smsManager = this.getSystemService(SmsManager::class.java)
-            val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال."
+            val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال. شكراً لتعاملكم معنا."
             smsManager.sendTextMessage(customer.phone, null, message, null, null)
             Toast.makeText(this, "تم الإرسال لـ ${customer.name}", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
@@ -255,8 +239,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun sendWhatsAppToCustomer(customer: Customer) {
         try {
-            val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال."
-            val url = "https://api.whatsapp.com/send?phone=${customer.phone}&text=${Uri.encode(message)}"
+            val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال. شكراً لتعاملكم معنا."
+            val url = "https://api.whatsapp.com/send?phone=967${customer.phone}&text=${Uri.encode(message)}"
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = Uri.parse(url)
             startActivity(intent)
@@ -266,7 +250,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendSmsToAll() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)!= PackageManager.PERMISSION_GRANTED) {
             requestSmsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
             return
         }
@@ -276,19 +260,23 @@ class MainActivity : AppCompatActivity() {
         }
         val smsManager = this.getSystemService(SmsManager::class.java)
         var successCount = 0
-        for (customer in customerList) {
-            if (customer.phone.isNotEmpty()) {
-                try {
-                    val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال."
-                    smsManager.sendTextMessage(customer.phone, null, message, null, null)
-                    successCount++
-                    Thread.sleep(500) // توقف نص ثانية بين كل رسالة عشان ما يحظرونك
-                } catch (e: Exception) {
-                    Log.e("SMS_ALL", "Failed for ${customer.name}", e)
+        Thread {
+            for (customer in customerList) {
+                if (customer.phone.isNotEmpty()) {
+                    try {
+                        val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال."
+                        smsManager.sendTextMessage(customer.phone, null, message, null, null)
+                        successCount++
+                        Thread.sleep(1000) // توقف ثانية بين كل رسالة عشان ما تنحظر
+                    } catch (e: Exception) {
+                        Log.e("SMS_ALL", "Failed for ${customer.name}", e)
+                    }
                 }
             }
-        }
-        Toast.makeText(this, "تم إرسال $successCount رسالة من ${customerList.size}", Toast.LENGTH_LONG).show()
+            runOnUiThread {
+                 Toast.makeText(this, "تم إرسال $successCount رسالة من ${customerList.size}", Toast.LENGTH_LONG).show()
+            }
+        }.start()
     }
 
     private fun sendWhatsAppToAll() {
@@ -296,16 +284,20 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "لا يوجد عملاء", Toast.LENGTH_SHORT).show()
             return
         }
-        // واتساب ما يسمح تفتح محادثات كثيرة مرة واحدة. لازم كل واحد لحاله
-        Toast.makeText(this, "سيتم فتح واتساب لكل عميل. اضغط رجوع بعد كل رسالة", Toast.LENGTH_LONG).show()
-        
-        // نرسل للكل بالتتابع. المستخدم لازم يرجع للتطبيق بعد كل رسالة
-        for (customer in customerList) {
-            if (customer.phone.isNotEmpty()) {
-                sendWhatsAppToCustomer(customer)
-                Thread.sleep(1000) // نعطيه فرصة ثانية
+        // واتساب يمنع فتح عدة محادثات. لازم واحد واحد
+        AlertDialog.Builder(this)
+           .setTitle("تنبيه واتساب")
+           .setMessage("سيتم فتح محادثة واتساب لكل عميل. بعد الإرسال اضغط رجوع للانتقال للعميل التالي.")
+           .setPositiveButton("ابدأ") { _, _ ->
+                for (customer in customerList) {
+                    if (customer.phone.isNotEmpty()) {
+                        sendWhatsAppToCustomer(customer)
+                        Thread.sleep(1500) // نعطيه فرصة يفتح
+                    }
+                }
             }
-        }
+           .setNegativeButton("إلغاء", null)
+           .show()
     }
 
     private fun showActivationDialog(force: Boolean) {
@@ -313,10 +305,10 @@ class MainActivity : AppCompatActivity() {
         editText.hint = "WD-WXXXX-X"
 
         val builder = AlertDialog.Builder(this)
-           .setTitle("تفعيل التطبيق")
-           .setMessage("الفترة التجريبية: ${licenseManager.getRemainingDays()} يوم متبقي\n\nادخل كود التفعيل")
-           .setView(editText)
-           .setPositiveButton("تفعيل") { _, _ ->
+          .setTitle("تفعيل التطبيق")
+          .setMessage("الفترة التجريبية: ${licenseManager.getRemainingDays()} يوم متبقي\n\nادخل كود التفعيل")
+          .setView(editText)
+          .setPositiveButton("تفعيل") { _, _ ->
                 val code = editText.text.toString().trim().uppercase()
                 val result = licenseManager.activateWithCode(code)
                 Toast.makeText(this, result, Toast.LENGTH_LONG).show()
