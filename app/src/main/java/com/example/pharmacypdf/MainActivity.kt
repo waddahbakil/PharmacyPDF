@@ -22,8 +22,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.pharmacypdf.databinding.ActivityMainBinding
-import org.apache.poi.ss.usermodel.CellType
-import org.apache.poi.ss.usermodel.WorkbookFactory
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,9 +33,9 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var isSendingWhatsApp = false
 
-    private val pickExcelLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val pickCsvLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.data?.let { uri -> importExcelFromUri(uri) }
+            result.data?.data?.let { uri -> importCsvFromUri(uri) }
         }
     }
 
@@ -50,7 +48,7 @@ class MainActivity : AppCompatActivity() {
     private val requestStoragePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (isGranted) openExcelPicker() else Toast.makeText(this, "تم رفض صلاحية قراءة الملفات", Toast.LENGTH_SHORT).show()
+        if (isGranted) openCsvPicker() else Toast.makeText(this, "تم رفض صلاحية قراءة الملفات", Toast.LENGTH_SHORT).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,15 +100,15 @@ class MainActivity : AppCompatActivity() {
         binding.btnDeleteAll.setOnClickListener {
             if (!licenseManager.isActivated()) { showActivationDialog(true); return@setOnClickListener }
             AlertDialog.Builder(this)
-               .setTitle("تأكيد الحذف")
-               .setMessage("هل أنت متأكد من حذف كل العملاء؟")
-               .setPositiveButton("نعم") { _, _ ->
+         .setTitle("تأكيد الحذف")
+         .setMessage("هل أنت متأكد من حذف كل العملاء؟")
+         .setPositiveButton("نعم") { _, _ ->
                     dbHelper.deleteAllCustomers()
                     loadCustomers()
                     Toast.makeText(this, "تم حذف الكل", Toast.LENGTH_SHORT).show()
                 }
-               .setNegativeButton("لا", null)
-               .show()
+         .setNegativeButton("لا", null)
+         .show()
         }
 
         binding.btnImportExcel.setOnClickListener {
@@ -135,72 +133,52 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkStoragePermissionAndImport() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            openExcelPicker()
+            openCsvPicker()
         } else {
             requestStoragePermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
     }
 
-    private fun openExcelPicker() {
+    private fun openCsvPicker() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "*/*"
-        val mimeTypes = arrayOf(
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+        intent.type = "text/*"
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-        pickExcelLauncher.launch(Intent.createChooser(intent, "اختر ملف الإكسل"))
+        pickCsvLauncher.launch(Intent.createChooser(intent, "اختر ملف CSV"))
     }
 
-    private fun importExcelFromUri(uri: Uri) {
+    private fun importCsvFromUri(uri: Uri) {
         try {
             val inputStream = contentResolver.openInputStream(uri)
-            val workbook = WorkbookFactory.create(inputStream)
-            val sheet = workbook.getSheetAt(0)
+            val reader = inputStream?.bufferedReader()
             var importedCount = 0
             var errorCount = 0
 
-            for (i in 1..sheet.lastRowNum) {
+            reader?.readLine() // تخطي العنوان
+
+            reader?.forEachLine { line ->
                 try {
-                    val row = sheet.getRow(i)?: continue
-                    val nameCell = row.getCell(0, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
-                    val phoneCell = row.getCell(1, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
-                    val debtCell = row.getCell(2, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
+                    val columns = line.split(",")
+                    if (columns.size >= 3) {
+                        val name = columns[0].trim()
+                        val phone = columns[1].trim().replace(" ", "").replace("-", "")
+                        val debt = columns[2].trim().toDoubleOrNull()?: 0.0
 
-                    val name = when (nameCell.cellType) {
-                        CellType.STRING -> nameCell.stringCellValue
-                        CellType.NUMERIC -> nameCell.numericCellValue.toString()
-                        else -> ""
-                    }.trim()
-
-                    val phone = when (phoneCell.cellType) {
-                        CellType.STRING -> phoneCell.stringCellValue
-                        CellType.NUMERIC -> phoneCell.numericCellValue.toLong().toString()
-                        else -> ""
-                    }.trim().replace(" ", "").replace("-", "")
-
-                    val debt = when (debtCell.cellType) {
-                        CellType.NUMERIC -> debtCell.numericCellValue
-                        CellType.STRING -> debtCell.stringCellValue.toDoubleOrNull()?: 0.0
-                        else -> 0.0
-                    }
-
-                    if (name.isNotEmpty() && phone.isNotEmpty()) {
-                        dbHelper.addCustomer(Customer(0, name, phone, debt))
-                        importedCount++
+                        if (name.isNotEmpty() && phone.isNotEmpty()) {
+                            dbHelper.addCustomer(Customer(0, name, phone, debt))
+                            importedCount++
+                        }
                     }
                 } catch (e: Exception) {
                     errorCount++
-                    Log.e("ExcelImport", "Error in row $i", e)
+                    Log.e("CSVImport", "Error in line: $line", e)
                 }
             }
-            workbook.close()
+            reader?.close()
             loadCustomers()
             Toast.makeText(this, "تم استيراد $importedCount عميل. أخطاء: $errorCount", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(this, "فشل الاستيراد: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "فشل الاستيراد: تأكد أن الملف CSV", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -220,10 +198,10 @@ class MainActivity : AppCompatActivity() {
         val editText = EditText(this)
         editText.hint = "الاسم,الرقم,الدين"
         AlertDialog.Builder(this)
-           .setTitle("إضافة عميل جديد")
-           .setMessage("مثال: احمد,777123456,500")
-           .setView(editText)
-           .setPositiveButton("إضافة") { _, _ ->
+   .setTitle("إضافة عميل جديد")
+   .setMessage("مثال: احمد,777123456,500")
+   .setView(editText)
+   .setPositiveButton("إضافة") { _, _ ->
                 val data = editText.text.toString().split(",")
                 if (data.size == 3) {
                     try {
@@ -237,20 +215,20 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "اكتب 3 قيم مفصولة بفاصلة", Toast.LENGTH_SHORT).show()
                 }
             }
-           .setNegativeButton("إلغاء", null)
-           .show()
+   .setNegativeButton("إلغاء", null)
+   .show()
     }
 
     private fun deleteCustomer(customer: Customer) {
         AlertDialog.Builder(this)
-           .setTitle("تأكيد الحذف")
-           .setMessage("حذف ${customer.name}؟")
-           .setPositiveButton("حذف") { _, _ ->
+   .setTitle("تأكيد الحذف")
+   .setMessage("حذف ${customer.name}؟")
+   .setPositiveButton("حذف") { _, _ ->
                 dbHelper.deleteCustomer(customer.id)
                 loadCustomers()
             }
-           .setNegativeButton("إلغاء", null)
-           .show()
+   .setNegativeButton("إلغاء", null)
+   .show()
     }
 
     private fun sendSmsToCustomer(customer: Customer) {
@@ -261,7 +239,7 @@ class MainActivity : AppCompatActivity() {
         try {
             val smsManager = this.getSystemService(SmsManager::class.java)
             val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال."
-            smsManager.sendTextMessage(customer.phone, null, message, null, null)
+            smsManager.sendTextMessage(customer.phone, null, message, null)
             Toast.makeText(this, "تم الإرسال لـ ${customer.name}", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(this, "فشل الإرسال", Toast.LENGTH_SHORT).show()
@@ -295,7 +273,7 @@ class MainActivity : AppCompatActivity() {
         val smsManager = this.getSystemService(SmsManager::class.java)
         var index = 0
         var successCount = 0
-        
+
         fun sendNext() {
             if (index >= customerList.size) {
                 Toast.makeText(this, "اكتمل الإرسال: $successCount من ${customerList.size}", Toast.LENGTH_LONG).show()
@@ -305,7 +283,7 @@ class MainActivity : AppCompatActivity() {
             if (customer.phone.isNotEmpty()) {
                 try {
                     val message = "عزيزي ${customer.name}، نود تذكيرك بمبلغ الدين: ${customer.debt} ريال."
-                    smsManager.sendTextMessage(customer.phone, null, message, null, null)
+                    smsManager.sendTextMessage(customer.phone, null, message, null)
                     successCount++
                 } catch (e: Exception) {
                     Log.e("SMS_ALL", "Failed for ${customer.name}", e)
@@ -314,16 +292,16 @@ class MainActivity : AppCompatActivity() {
             index++
             handler.postDelayed({ sendNext() }, 1500)
         }
-        
+
         AlertDialog.Builder(this)
-           .setTitle("إرسال جماعي SMS")
-           .setMessage("سيتم الإرسال لـ ${customerList.size} عميل. المدة المتوقعة: ${customerList.size * 1.5} ثانية")
-           .setPositiveButton("ابدأ") { _, _ ->
+  .setTitle("إرسال جماعي SMS")
+  .setMessage("سيتم الإرسال لـ ${customerList.size} عميل. المدة المتوقعة: ${customerList.size * 1.5} ثانية")
+  .setPositiveButton("ابدأ") { _, _ ->
                 Toast.makeText(this, "جاري الإرسال...", Toast.LENGTH_SHORT).show()
                 sendNext()
             }
-           .setNegativeButton("إلغاء", null)
-           .show()
+  .setNegativeButton("إلغاء", null)
+  .show()
     }
 
     private fun sendWhatsAppToAll() {
@@ -353,65 +331,65 @@ class MainActivity : AppCompatActivity() {
             }
             sendWhatsAppToCustomer(validCustomers[index])
             index++
-            handler.postDelayed({ openNext() }, 3000)
+            handler.postDelayed({ openNext() }, 3500)
         }
 
         AlertDialog.Builder(this)
-           .setTitle("إرسال واتساب للكل")
-           .setMessage("سيتم فتح ${validCustomers.size} محادثة. أرسل للعميل الأول واضغط رجوع، سيفتح التالي تلقائياً كل 3 ثواني.")
-           .setPositiveButton("ابدأ") { _, _ ->
+  .setTitle("إرسال واتساب للكل")
+  .setMessage("سيتم فتح ${validCustomers.size} محادثة. أرسل للعميل الأول واضغط رجوع، وسيفتح التالي تلقائياً كل 3.5 ثانية.")
+  .setPositiveButton("ابدأ") { _, _ ->
                 Toast.makeText(this, "بدء الإرسال...", Toast.LENGTH_SHORT).show()
                 openNext()
             }
-           .setNegativeButton("إلغاء", null)
-           .setOnDismissListener { isSendingWhatsApp = false }
-           .show()
+  .setNegativeButton("إلغاء", null)
+  .setOnDismissListener { isSendingWhatsApp = false }
+  .show()
     }
 
     private fun showActivationDialog(force: Boolean) {
         val options = arrayOf("تفعيل بكود", "توليد كود لعميل", "عرض ID الجهاز")
         AlertDialog.Builder(this)
-           .setTitle("إدارة التفعيل")
-           .setMessage("متبقي: ${licenseManager.getRemainingDays()} يوم")
-           .setItems(options) { _, which ->
+  .setTitle("إدارة التفعيل")
+  .setMessage("متبقي: ${licenseManager.getRemainingDays()} يوم")
+  .setItems(options) { _, which ->
                 when (which) {
                     0 -> showEnterCodeDialog()
                     1 -> showGenerateCodeDialog()
                     2 -> showDeviceIdDialog()
                 }
             }
-           .setNegativeButton("إغلاق", null)
-           .setCancelable(!force)
-           .show()
+  .setNegativeButton("إغلاق", null)
+  .setCancelable(!force)
+  .show()
     }
 
     private fun showEnterCodeDialog() {
         val editText = EditText(this)
         editText.hint = "WD-WXXXX-X"
         AlertDialog.Builder(this)
-           .setTitle("تفعيل التطبيق")
-           .setView(editText)
-           .setPositiveButton("تفعيل") { _, _ ->
+  .setTitle("تفعيل التطبيق")
+  .setView(editText)
+  .setPositiveButton("تفعيل") { _, _ ->
                 val code = editText.text.toString().trim().uppercase()
                 val result = licenseManager.activateWithCode(code)
                 Toast.makeText(this, result, Toast.LENGTH_LONG).show()
                 checkActivation()
             }
-           .setNegativeButton("إلغاء", null)
-           .show()
+  .setNegativeButton("إلغاء", null)
+  .show()
     }
 
     private fun showGenerateCodeDialog() {
         val editText = EditText(this)
         editText.hint = "ID جهاز العميل"
         AlertDialog.Builder(this)
-           .setTitle("توليد كود تفعيل")
-           .setMessage("الصق ID جهاز العميل هنا")
-           .setView(editText)
-           .setPositiveButton("أسبوع") { _, _ -> generateAndCopyCode(editText.text.toString(), 'W') }
-           .setNeutralButton("شهر") { _, _ -> generateAndCopyCode(editText.text.toString(), 'M') }
-           .setNegativeButton("سنة") { _, _ -> generateAndCopyCode(editText.text.toString(), 'Y') }
-           .show()
+  .setTitle("توليد كود تفعيل")
+  .setMessage("الصق ID جهاز العميل هنا")
+  .setView(editText)
+  .setPositiveButton("أسبوع") { _, _ -> generateAndCopyCode(editText.text.toString(), 'W') }
+  .setNeutralButton("شهر") { _, _ -> generateAndCopyCode(editText.text.toString(), 'M') }
+  .setNegativeButton("سنة") { _, _ -> generateAndCopyCode(editText.text.toString(), 'Y') }
+  .show()
     }
 
     private fun generateAndCopyCode(deviceId: String, type: Char) {
@@ -426,10 +404,10 @@ class MainActivity : AppCompatActivity() {
 
         val typeText = when (type) { 'W' -> "أسبوع"; 'M' -> "شهر"; 'Y' -> "سنة"; else -> "" }
         AlertDialog.Builder(this)
-           .setTitle("تم توليد الكود")
-           .setMessage("الكود لـ $typeText:\n\n$code\n\nتم نسخه للحافظة")
-           .setPositiveButton("تمام", null)
-           .show()
+  .setTitle("تم توليد الكود")
+  .setMessage("الكود لـ $typeText:\n\n$code\n\nتم نسخه للحافظة")
+  .setPositiveButton("تمام", null)
+  .show()
     }
 
     private fun showDeviceIdDialog() {
@@ -438,10 +416,10 @@ class MainActivity : AppCompatActivity() {
         val clip = ClipData.newPlainText("Device ID", deviceId)
         clipboard.setPrimaryClip(clip)
         AlertDialog.Builder(this)
-           .setTitle("ID هذا الجهاز")
-           .setMessage("$deviceId\n\nتم نسخه للحافظة")
-           .setPositiveButton("تمام", null)
-           .show()
+  .setTitle("ID هذا الجهاز")
+  .setMessage("$deviceId\n\nتم نسخه للحافظة")
+  .setPositiveButton("تمام", null)
+  .show()
     }
 
     override fun onDestroy() {
