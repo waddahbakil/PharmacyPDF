@@ -1,7 +1,0 @@
--keep class androidx.security.crypto.** { *; }
--dontwarn androidx.security.crypto.**
--dontwarn org.apache.poi.**
--dontwarn org.apache.xmlbeans.**
--dontwarn com.microsoft.schemas.**
--keep class org.apache.poi.** { *; }
--keep class org.openxmlformats.** { *; }
