@@ -3,6 +3,8 @@ name: Android CI
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -10,21 +12,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Set up JDK 17
+    - uses: actions/checkout@v4
+    
+    - name: set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-
+        
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-
+      
     - name: Build with Gradle
       run: ./gradlew assembleDebug --no-daemon --no-build-cache --stacktrace
-
+      
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
