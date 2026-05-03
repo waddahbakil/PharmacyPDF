@@ -1,114 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    tools:context=".MainActivity">
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/tvTotalDebt"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="إدارة ديون العملاء"
-        android:textSize="22sp"
+        android:text="إجمالي الديون: 0 ريال"
+        android:textSize="20sp"
         android:textStyle="bold"
+        android:textColor="#D32F2F"
         android:gravity="center"
-        android:layout_marginBottom="16dp" />
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        app:cardBackgroundColor="#E3F2FD"
-        app:cardCornerRadius="12dp">
-
-        <TextView
-            android:id="@+id/tvTotalDebt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:text="إجمالي الديون: 0.0 ريال"
-            android:textSize="18sp"
-            android:textColor="#0D47A1"
-            android:gravity="center" />
-    </androidx.cardview.widget.CardView>
+        android:padding="12dp"
+        android:background="#FFEBEE"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
-        android:id="@+id/btnImportExcel"
-        android:layout_width="match_parent"
+        android:id="@+id/btnActivation"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="استيراد إكسل"
-        android:backgroundTint="#4CAF50" />
+        android:layout_marginTop="8dp"
+        android:text="التفعيل"
+        android:backgroundTint="#FF9800"
+        app:layout_constraintTop_toBottomOf="@id/tvTotalDebt"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/layoutButtons"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp">
+        android:weightSum="3"
+        app:layout_constraintTop_toBottomOf="@id/btnActivation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <Button
             android:id="@+id/btnAddCustomer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_margin="4dp"
             android:text="إضافة عميل"
-            android:backgroundTint="#757575" />
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnImportExcel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="4dp"
+            android:text="استيراد CSV"
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/btnDeleteAll"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_margin="4dp"
             android:text="حذف الكل"
-            android:backgroundTint="#D32F2F"
-            android:layout_marginStart="8dp"/>
+            android:textSize="12sp"
+            android:backgroundTint="#D32F2F" />
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/layoutButtons2"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp">
-
-        <Button
-            android:id="@+id/btnWhatsAppAll"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="واتس للكل"
-            android:backgroundTint="#2E7D32" />
+        android:weightSum="2"
+        app:layout_constraintTop_toBottomOf="@id/layoutButtons"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <Button
             android:id="@+id/btnSmsAll"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_margin="4dp"
             android:text="SMS للكل"
-            android:backgroundTint="#1976D2"
-            android:layout_marginStart="8dp"/>
+            android:textSize="12sp"
+            android:backgroundTint="#4CAF50" />
+
+        <Button
+            android:id="@+id/btnWhatsAppAll"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="4dp"
+            android:text="واتساب للكل"
+            android:textSize="12sp"
+            android:backgroundTint="#25D366" />
     </LinearLayout>
-
-    <Button
-        android:id="@+id/btnActivation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="حالة التفعيل"
-        android:backgroundTint="#FF9800"
-        android:layout_marginTop="8dp"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="✓ يتم الحفظ تلقائياً"
-        android:gravity="center"
-        android:textColor="#388E3C"
-        android:layout_marginTop="8dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCustomers"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutButtons2"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:listitem="@layout/item_customer" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
