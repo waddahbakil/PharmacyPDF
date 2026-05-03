@@ -20,14 +20,16 @@
             android:layout_height="wrap_content"
             android:text="اسم العميل"
             android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textColor="#000000" />
 
         <TextView
             android:id="@+id/tvPhone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="777123456" />
+            android:text="777123456"
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/tvDebt"
@@ -35,12 +37,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="الدين: 500 ريال"
-            android:textColor="#D32F2F" />
+            android:textSize="16sp"
+            android:textColor="#D32F2F"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal"
             android:weightSum="3">
 
@@ -51,7 +55,8 @@
                 android:layout_weight="1"
                 android:layout_margin="2dp"
                 android:text="SMS"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:backgroundTint="#2196F3" />
 
             <Button
                 android:id="@+id/btnWhatsApp"
@@ -60,7 +65,8 @@
                 android:layout_weight="1"
                 android:layout_margin="2dp"
                 android:text="واتساب"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:backgroundTint="#25D366" />
 
             <Button
                 android:id="@+id/btnDelete"
